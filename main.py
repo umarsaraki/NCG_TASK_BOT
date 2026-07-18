@@ -3,16 +3,16 @@ import os
 import time
 from supabase import create_client, Client
 from datetime import datetime
-from flask import Flask, request # 1. NA KARA WANNAN
+from flask import Flask, request
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL") # 2. NA KARA WANNAN
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 bot = telebot.TeleBot(BOT_TOKEN)
-app = Flask(__name__) # 3. NA KARA WANNAN
+app = Flask(__name__)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 ADMIN_IDS = [8552397401, 7544805601]
@@ -187,7 +187,6 @@ def handle_photo(message):
     supabase.table('user_tasks').insert({"user_id": user_id, "username": username, "task_id": task_id, "screenshot_url": file_id, "status": "pending", "submitted_at": datetime.now().isoformat()}).execute()
     del pending_submissions[user_id]; bot.reply_to(message, "Screenshot received! Admin will review ✅")
 
-# ADMIN
 @bot.message_handler(commands=['addtask'])
 def add_task(message):
     if not is_admin(message.from_user.id): return
@@ -218,7 +217,6 @@ def reject_task(message):
     supabase.table('user_tasks').update({"status": "rejected"}).eq('user_id', uid).eq('task_id', tid).execute()
     bot.reply_to(message, "Rejected"); bot.send_message(uid, f"Task {tid} REJECTED ❌")
 
-# 4. NA GOGE `bot.polling()` NA SANYA WANNAN KASA
 @app.route('/' + BOT_TOKEN, methods=['POST'])
 def getMessage():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
