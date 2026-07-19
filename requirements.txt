@@ -1,4 +1,4 @@
-pyTelegramBotAPI
-supabase
 flask
 gunicorn
+supabase
+python-telegram-bot
