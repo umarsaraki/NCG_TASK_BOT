@@ -156,7 +156,7 @@ def history(message): bot.reply_to(message, "📜 History feature is here")
 def task(message): bot.reply_to(message, "📋 Task feature is here")
 def leaderboard(message): bot.reply_to(message, "🏆 Leaderboard feature is here")
 
-# WEBHOOK CODE DON RAILWAY
+# WEBHOOK CODE DON RENDER
 @app.route('/' + BOT_TOKEN, methods=['POST'])
 def webhook():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
@@ -168,5 +168,4 @@ def webhook_test():
     bot.set_webhook(url=WEBHOOK_URL + BOT_TOKEN)
     return "Webhook set", 200
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 8080)))
+# Wannan layin gunicorn zai rike shi, don haka ba a buqatar app.run
