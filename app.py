@@ -24,7 +24,6 @@ MIN_WITHDRAW = 100
 TASK_POINTS = 10
 WELCOME_BONUS = 20
 REFERRAL_BONUS = 20
-PRIZES = {1: 50000, 2: 40000, 3: 30000, 4: 20000, 5: 15000, 6: 10000, 7: 8000, 8: 6000, 9: 4000, 10: 2000}
 
 def is_admin(user_id):
     return user_id in ADMIN_IDS
@@ -92,8 +91,13 @@ def handle_all_messages(message):
     text = message.text
     if user_id in user_states:
         state = user_states[user_id]
-        if state == "waiting_payment": add_payment_data(message); return
-        elif state == "waiting_withdraw": process_withdraw(message); return
+        if state == "waiting_payment": 
+            add_payment_data(message)
+            return
+        elif state == "waiting_withdraw": 
+            process_withdraw(message)
+            return
+            
     if text == "💰 Balance": balance(message)
     elif text == "📋 Task": task(message)
     elif text == "💳 Add Payment": add_payment(message)
@@ -123,6 +127,12 @@ def add_payment_data(message):
     try:
         parts = [p.strip() for p in message.text.split('|')]
         acc, name, bank, phone, network = parts
+        
+        # Tace bayanan da aka shigar don tsaro
+        if not acc.isdigit():
+            bot.reply_to(message, "❌ Account number must be numbers only.")
+            return
+
         supabase.table('users').update({"account_number": acc, "account_name": name, "bank_name": bank, "phone": phone, "network": network}).eq('user_id', message.from_user.id).execute()
         del user_states[message.from_user.id]
         bot.reply_to(message, "✅ Payment method saved!")
@@ -130,8 +140,8 @@ def add_payment_data(message):
         bot.reply_to(message, "❌ Wrong format.")
 
 def withdraw(message):
-    user = supabase.table('users').select("*").eq('user_id', message.from_user.id).execute().data[0]
-    if not user.get('account_number'):
+    user_data = supabase.table('users').select("*").eq('user_id', message.from_user.id).execute().data
+    if not user_data or not user_data[0].get('account_number'):
         bot.reply_to(message, "🚫 Add Payment method first")
         return
     user_states[message.from_user.id] = "waiting_withdraw"
@@ -143,20 +153,20 @@ def process_withdraw(message):
         user_id = message.from_user.id
 
         user = supabase.table('users').select("balance").eq('user_id', user_id).execute().data[0]
-        balance = user['balance']
+        current_balance = user['balance']
 
         if amount < MIN_WITHDRAW:
             bot.reply_to(message, f"❌ Minimum is {MIN_WITHDRAW}")
             return
 
-        if amount > balance:
-            bot.reply_to(message, f"❌ You have {balance}")
+        if amount > current_balance:
+            bot.reply_to(message, f"❌ You have {current_balance}")
             return
 
-        supabase.table('users').update(
-            {"balance": balance - amount}
-        ).eq('user_id', user_id).execute()
+        # Rage kudi a database
+        supabase.table('users').update({"balance": current_balance - amount}).eq('user_id', user_id).execute()
 
+        # Saka tarihin cire kudi
         supabase.table('withdrawals').insert({
             "user_id": user_id,
             "amount": amount,
@@ -165,29 +175,23 @@ def process_withdraw(message):
         }).execute()
 
         del user_states[user_id]
-
         bot.reply_to(message, f"✅ Withdrawal of {amount} submitted!")
 
         for admin in ADMIN_IDS:
             try:
-                bot.send_message(
-                    admin,
-                    f"New Withdrawal Request:\nUser: {user_id}\nAmount: {amount}"
-                )
+                bot.send_message(admin, f"New Withdrawal Request:\nUser: {user_id}\nAmount: {amount}")
             except Exception as e:
                 print(f"Failed to send to admin {admin}: {e}")
-
-    except Exception:
+    except ValueError:
         bot.reply_to(message, "❌ Please enter a valid number")
-        )
-        
     except Exception as e:
-        print(f"Failed to send to admin {admin}: {e}")
+        print(f"Error in withdrawal: {e}")
+        bot.reply_to(message, "❌ An error occurred. Please try again.")
+
 def history(message): bot.reply_to(message, "📜 History feature is here")
 def task(message): bot.reply_to(message, "📋 Task feature is here")
 def leaderboard(message): bot.reply_to(message, "🏆 Leaderboard feature is here")
 
-# WEBHOOK CODE FOR RENDER
 @app.route('/webhook' + BOT_TOKEN, methods=['POST'])
 def webhook():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
@@ -197,13 +201,8 @@ def webhook():
 def home():
     return "NCG Telegram Bot is Running", 200
 
-bot.remove_webhook()
-
-bot.set_webhook(
-    url=f"{WEBHOOK_URL}{BOT_TOKEN}"
-)
-
-# THIS LINE FOR RENDER PORT
 if __name__ == "__main__":
+    bot.remove_webhook()
+    bot.set_webhook(url=f"{WEBHOOK_URL}{BOT_TOKEN}")
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
