@@ -5,7 +5,7 @@ from supabase import create_client, Client
 from datetime import datetime
 from flask import Flask, request
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = "8967870142:AAEFgCd_r4Y-D8rlcchd0SEweQPWZD_7DaQ"
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
@@ -112,7 +112,7 @@ def referral(message):
     ref_link = f"https://t.me/{bot.get_me().username}?start={user_id}"
     ref_count = supabase.table('users').select("user_id").eq('referred_by', user_id).execute()
     count = len(ref_count.data)
-    text = f"👥 **Your Referral Link**\n\n{ref_link}\n\nEarn **{REFERRAL_BONUS} points** for every person who joins.\n\n**Total Referrals:** {count}"
+    text = f"👥 **Your Referral Link**\n{ref_link}\n\nEarn **{REFERRAL_BONUS} points** for every person who joins.\n\n**Total Referrals:** {count}"
     bot.send_message(message.chat.id, text, parse_mode="Markdown")
 
 def add_payment(message):
@@ -132,10 +132,10 @@ def add_payment_data(message):
 def withdraw(message):
     user = supabase.table('users').select("*").eq('user_id', message.from_user.id).execute().data[0]
     if not user.get('account_number'):
-        bot.reply_to(message, "🚫 Add Payment first")
+        bot.reply_to(message, "🚫 Add Payment method first")
         return
     user_states[message.from_user.id] = "waiting_withdraw"
-    bot.reply_to(message, f"Min withdrawal is {MIN_WITHDRAW} points\nEnter amount:")
+    bot.reply_to(message, f"Minimum withdrawal is {MIN_WITHDRAW} points\nEnter amount:")
 
 def process_withdraw(message):
     try:
@@ -143,20 +143,20 @@ def process_withdraw(message):
         user_id = message.from_user.id
         user = supabase.table('users').select("balance").eq('user_id', user_id).execute().data[0]
         balance = user['balance']
-        if amount < MIN_WITHDRAW: bot.reply_to(message, f"❌ Min is {MIN_WITHDRAW}"); return
+        if amount < MIN_WITHDRAW: bot.reply_to(message, f"❌ Minimum is {MIN_WITHDRAW}"); return
         if amount > balance: bot.reply_to(message, f"❌ You have {balance}"); return
         supabase.table('users').update({"balance": balance - amount}).eq('user_id', user_id).execute()
         supabase.table('withdrawals').insert({"user_id": user_id, "amount": amount, "status": "pending", "requested_at": datetime.now().isoformat()}).execute()
         del user_states[user_id]
         bot.reply_to(message, f"✅ Withdrawal of {amount} submitted!")
-        for admin in ADMIN_IDS: bot.send_message(admin, f"New Withdrawal:\nUser: {user_id}\nAmount: {amount}")
-    except: bot.reply_to(message, "❌ Enter number")
+        for admin in ADMIN_IDS: bot.send_message(admin, f"New Withdrawal Request:\nUser: {user_id}\nAmount: {amount}")
+    except: bot.reply_to(message, "❌ Please enter a valid number")
 
 def history(message): bot.reply_to(message, "📜 History feature is here")
 def task(message): bot.reply_to(message, "📋 Task feature is here")
 def leaderboard(message): bot.reply_to(message, "🏆 Leaderboard feature is here")
 
-# WEBHOOK CODE DON RENDER
+# WEBHOOK CODE FOR RENDER
 @app.route('/' + BOT_TOKEN, methods=['POST'])
 def webhook():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
@@ -168,4 +168,7 @@ def webhook_test():
     bot.set_webhook(url=WEBHOOK_URL + BOT_TOKEN)
     return "Webhook set", 200
 
-# Wannan layin gunicorn zai rike shi, don haka ba a buqatar app.run
+# THIS LINE FOR RENDER PORT
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
