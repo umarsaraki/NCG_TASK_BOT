@@ -157,7 +157,7 @@ def task(message): bot.reply_to(message, "📋 Task feature is here")
 def leaderboard(message): bot.reply_to(message, "🏆 Leaderboard feature is here")
 
 # WEBHOOK CODE FOR RENDER
-@app.route('/' + BOT_TOKEN, methods=['POST'])
+@app.route('/webhook' + BOT_TOKEN, methods=['POST'])
 def webhook():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "ok", 200
