@@ -1,4 +1,5 @@
-flask
-gunicorn
-supabase
-python-telegram-bot
+    pyTelegramBotAPI
+    Flask
+    gunicorn
+    supabase
+    python-dotenv
