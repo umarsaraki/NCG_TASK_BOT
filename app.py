@@ -5,7 +5,7 @@ from supabase import create_client, Client
 from datetime import datetime
 from flask import Flask, request
 
-BOT_TOKEN = "8967870142:AAEFgCd_r4Y-D8rlcchd0SEweQPWZD_7DaQ"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
