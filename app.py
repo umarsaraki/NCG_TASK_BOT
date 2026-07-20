@@ -141,17 +141,45 @@ def process_withdraw(message):
     try:
         amount = int(message.text)
         user_id = message.from_user.id
+
         user = supabase.table('users').select("balance").eq('user_id', user_id).execute().data[0]
         balance = user['balance']
-        if amount < MIN_WITHDRAW: bot.reply_to(message, f"❌ Minimum is {MIN_WITHDRAW}"); return
-        if amount > balance: bot.reply_to(message, f"❌ You have {balance}"); return
-        supabase.table('users').update({"balance": balance - amount}).eq('user_id', user_id).execute()
-        supabase.table('withdrawals').insert({"user_id": user_id, "amount": amount, "status": "pending", "requested_at": datetime.now().isoformat()}).execute()
-        del user_states[user_id]
-        bot.reply_to(message, f"✅ Withdrawal of {amount} submitted!")
-        for admin in ADMIN_IDS: bot.send_message(admin, f"New Withdrawal Request:\nUser: {user_id}\nAmount: {amount}")
-    except: bot.reply_to(message, "❌ Please enter a valid number")
 
+        if amount < MIN_WITHDRAW:
+            bot.reply_to(message, f"❌ Minimum is {MIN_WITHDRAW}")
+            return
+
+        if amount > balance:
+            bot.reply_to(message, f"❌ You have {balance}")
+            return
+
+        supabase.table('users').update({"balance": balance - amount}).eq('user_id', user_id).execute()
+
+        supabase.table('withdrawals').insert({
+            "user_id": user_id,
+            "amount": amount,
+            "status": "pending",
+            "requested_at": datetime.now().isoformat()
+        }).execute()
+
+        del user_states[user_id]
+
+        bot.reply_to(message, f"✅ Withdrawal of {amount} submitted!")
+
+        for admin in ADMIN_IDS:
+            try:
+                bot.send_message(
+                    admin,
+                    f"New Withdrawal Request:\nUser: {user_id}\nAmount: {amount}"
+                )
+            except Exception as e:
+                print(f"Failed to send to admin {admin}: {e}")
+
+    except Exception:
+        bot.reply_to(message, "❌ Please enter a valid number")
+        )
+    except Exception as e:
+        print(f"Failed to send to admin {admin}: {e}")
 def history(message): bot.reply_to(message, "📜 History feature is here")
 def task(message): bot.reply_to(message, "📋 Task feature is here")
 def leaderboard(message): bot.reply_to(message, "🏆 Leaderboard feature is here")
