@@ -153,7 +153,9 @@ def process_withdraw(message):
             bot.reply_to(message, f"❌ You have {balance}")
             return
 
-        supabase.table('users').update({"balance": balance - amount}).eq('user_id', user_id).execute()
+        supabase.table('users').update(
+            {"balance": balance - amount}
+        ).eq('user_id', user_id).execute()
 
         supabase.table('withdrawals').insert({
             "user_id": user_id,
@@ -167,16 +169,18 @@ def process_withdraw(message):
         bot.reply_to(message, f"✅ Withdrawal of {amount} submitted!")
 
         for admin in ADMIN_IDS:
-    try:
-        bot.send_message(
-            admin,
-            f"New Withdrawal Request:\nUser: {user_id}\nAmount: {amount}"
-        )
-    except Exception as e:
-        print(f"Failed to send to admin {admin}: {e}")
+            try:
+                bot.send_message(
+                    admin,
+                    f"New Withdrawal Request:\nUser: {user_id}\nAmount: {amount}"
+                )
+            except Exception as e:
+                print(f"Failed to send to admin {admin}: {e}")
+
     except Exception:
         bot.reply_to(message, "❌ Please enter a valid number")
         )
+        
     except Exception as e:
         print(f"Failed to send to admin {admin}: {e}")
 def history(message): bot.reply_to(message, "📜 History feature is here")
