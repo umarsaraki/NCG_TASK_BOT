@@ -163,10 +163,14 @@ def webhook():
     return "ok", 200
 
 @app.route("/")
-def webhook_test():
-    bot.remove_webhook()
-    bot.set_webhook(url=WEBHOOK_URL + BOT_TOKEN)
-    return "Webhook set", 200
+def home():
+    return "NCG Telegram Bot is Running", 200
+
+bot.remove_webhook()
+
+bot.set_webhook(
+    url=f"{WEBHOOK_URL}{BOT_TOKEN}"
+)
 
 # THIS LINE FOR RENDER PORT
 if __name__ == "__main__":
