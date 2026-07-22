@@ -128,7 +128,6 @@ def add_payment_data(message):
         parts = [p.strip() for p in message.text.split('|')]
         acc, name, bank, phone, network = parts
         
-        # Tace bayanan da aka shigar don tsaro
         if not acc.isdigit():
             bot.reply_to(message, "❌ Account number must be numbers only.")
             return
@@ -163,10 +162,8 @@ def process_withdraw(message):
             bot.reply_to(message, f"❌ You have {current_balance}")
             return
 
-        # Rage kudi a database
         supabase.table('users').update({"balance": current_balance - amount}).eq('user_id', user_id).execute()
 
-        # Saka tarihin cire kudi
         supabase.table('withdrawals').insert({
             "user_id": user_id,
             "amount": amount,
@@ -192,6 +189,7 @@ def history(message): bot.reply_to(message, "📜 History feature is here")
 def task(message): bot.reply_to(message, "📋 Task feature is here")
 def leaderboard(message): bot.reply_to(message, "🏆 Leaderboard feature is here")
 
+# FLASK ROUTES FOR RENDER
 @app.route('/webhook' + BOT_TOKEN, methods=['POST'])
 def webhook():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
@@ -201,8 +199,17 @@ def webhook():
 def home():
     return "NCG Telegram Bot is Running", 200
 
+# SET WEBHOOK LOGIC AUTOMATICALLY ON STARTUP
+try:
+    if WEBHOOK_URL:
+        base_url = WEBHOOK_URL if WEBHOOK_URL.endswith('/') else WEBHOOK_URL + '/'
+        full_webhook_url = f"{base_url}webhook{BOT_TOKEN}"
+        bot.remove_webhook()
+        bot.set_webhook(url=full_webhook_url)
+        print(f"Webhook set to: {full_webhook_url}")
+except Exception as e:
+    print(f"Webhook error: {e}")
+
 if __name__ == "__main__":
-    bot.remove_webhook()
-    bot.set_webhook(url=f"{WEBHOOK_URL}{BOT_TOKEN}")
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
