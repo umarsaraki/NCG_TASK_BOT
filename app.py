@@ -189,8 +189,8 @@ def history(message): bot.reply_to(message, "📜 History feature is here")
 def task(message): bot.reply_to(message, "📋 Task feature is here")
 def leaderboard(message): bot.reply_to(message, "🏆 Leaderboard feature is here")
 
-# FLASK ROUTES FOR RENDER
-@app.route('/webhook' + BOT_TOKEN, methods=['POST'])
+# FLASK ROUTES FOR RENDER (Gyaran hanya zuwa /webhook kawai)
+@app.route('/webhook', methods=['POST'])
 def webhook():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "ok", 200
@@ -203,7 +203,7 @@ def home():
 try:
     if WEBHOOK_URL:
         base_url = WEBHOOK_URL if WEBHOOK_URL.endswith('/') else WEBHOOK_URL + '/'
-        full_webhook_url = f"{base_url}webhook{BOT_TOKEN}"
+        full_webhook_url = f"{base_url}webhook"
         bot.remove_webhook()
         bot.set_webhook(url=full_webhook_url)
         print(f"Webhook set to: {full_webhook_url}")
